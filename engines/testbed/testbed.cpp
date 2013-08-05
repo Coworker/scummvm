@@ -113,7 +113,7 @@ TestbedEngine::TestbedEngine(OSystem *syst)
 
 	// Initialize testsuites here
 	// GFX
-	Testsuite *ts = new GFXTestSuite();
+	/*Testsuite *ts = new GFXTestSuite();
 	_testsuiteList.push_back(ts);
 	// FS
 	ts = new FSTestSuite();
@@ -126,13 +126,14 @@ TestbedEngine::TestbedEngine(OSystem *syst)
 	_testsuiteList.push_back(ts);
 	// Events
 	ts = new EventTestSuite();
-	_testsuiteList.push_back(ts);
+	_testsuiteList.push_back(ts);*/
 	// Sound
-	ts = new SoundSubsystemTestSuite();
+	Testsuite *ts = new SoundSubsystemTestSuite();				// delete Testsuite * when ucoment
 	_testsuiteList.push_back(ts);
-	// Midi
+
+	/*// Midi
 	ts = new MidiTestSuite();
-	_testsuiteList.push_back(ts);
+	_testsuiteList.push_back(ts);*/
 }
 
 TestbedEngine::~TestbedEngine() {

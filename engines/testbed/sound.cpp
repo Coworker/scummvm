@@ -26,6 +26,10 @@
 #include "common/config-manager.h"
 
 #include "testbed/sound.h"
+#include "common/file.h"
+#include "audio/decoders/mp3.h"
+#include "audio/decoders/vorbis.h"
+
 
 namespace Testbed {
 
@@ -258,23 +262,124 @@ TestExitStatus SoundSubsystem::sampleRates() {
 	}
 
 	return passed;
-}
+}															
 
 SoundSubsystemTestSuite::SoundSubsystemTestSuite() {
 	addTest("SimpleBeeps", &SoundSubsystem::playBeeps, true);
 	addTest("MixSounds", &SoundSubsystem::mixSounds, true);
 
-	// Make audio-files discoverable
+	//Make audio-files discoverable
 	Common::FSNode gameRoot(ConfMan.get("path"));
 	if (gameRoot.exists()) {
 		SearchMan.addSubDirectoryMatching(gameRoot, "audiocd-files");
 		if (SearchMan.hasFile("track01.mp3") && SearchMan.hasFile("track02.mp3") && SearchMan.hasFile("track03.mp3") && SearchMan.hasFile("track04.mp3")) {
-			addTest("AudiocdOutput", &SoundSubsystem::audiocdOutput, true);
-		} else {
+			addTest("Play_mp3", &SoundSubsystem::Play_mp3, true);
+			} else {
 			Testsuite::logPrintf("Warning! Skipping test AudioCD: Required data files missing, check game-dir/audiocd-files\n");
 		}
 	}
+	if (SearchMan.hasFile("track01.ogg") && SearchMan.hasFile("track02.ogg") && SearchMan.hasFile("track03.ogg") && SearchMan.hasFile("track04.ogg")) {
+	addTest("Play_OGG", &SoundSubsystem::Play_Ogg, true);
+	} else {
+			Testsuite::logPrintf("Warning! Skipping test AudioOGG: Required data files missing, check game-dir/audiocd-files\n");
+	}
 	addTest("SampleRates", &SoundSubsystem::sampleRates, true);
 }
+TestExitStatus SoundSubsystem::Play_mp3() {
+	Testsuite::clearScreen();
+	TestExitStatus passed = kTestPassed;
+	Common::String info = "Testing Sound Output by playing mp3.\n"
+	"You should hear playing tracks from track01.mp3 to track04.mp3";
+	
+	if (Testsuite::handleInteractiveInput(info, "OK", "Skip", kOptionRight)) {
+		Testsuite::logPrintf("Info! Skipping test : Playing MP3 API\n");
+		return kTestSkipped;
+	}
 
+	Common::Point pt(0, 100);
+	Testsuite::writeOnScreen("Playing the test tracks of MP3 format in order i.e 1-2-3-last", pt);
+	
+	Audio::SeekableAudioStream *audioStream = NULL;
+	Audio::SoundHandle handle;
+	Audio::Mixer *_mixer = g_system->getMixer();
+	int volume = 100;
+	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, volume);
+	
+
+		for (int i = 1; i < 5; i++) {
+		Common::File *musicStream = new Common::File();
+		musicStream->open(Common::String::format("track%02d.mp3",i));		
+
+		#ifdef USE_MAD
+						audioStream = Audio::makeMP3Stream(musicStream, DisposeAfterUse::NO);
+		#endif
+	
+		if (!audioStream)
+			delete musicStream;
+
+		_mixer->playStream(Audio::Mixer::kMusicSoundType, &handle, audioStream);
+		Testsuite::writeOnScreen(Common::String::format("Playing Now: track%02d", i), pt);
+		while (_mixer->isSoundHandleActive(handle)) {
+		g_system->delayMillis(10);
+		g_system->updateScreen();
+		}
+		_mixer->stopHandle(handle);
+		musicStream->close();
+		delete musicStream;
+					
+	}
+	
+	return passed;
+}
+
+TestExitStatus SoundSubsystem::Play_Ogg() {
+	Testsuite::clearScreen();
+	TestExitStatus passed = kTestPassed;
+	Common::String info = "Testing Sound Output by playing ogg.\n"
+	"You should hear playing tracks from track01.ogg to track04.ogg";
+	
+	if (Testsuite::handleInteractiveInput(info, "OK", "Skip", kOptionRight)) {
+		Testsuite::logPrintf("Info! Skipping test : Playing OGG API\n");
+		return kTestSkipped;
+	}
+
+	Common::Point pt(0, 100);
+	Testsuite::writeOnScreen("Playing the test tracks of OGG format in order i.e 1-2-3-last", pt);
+	
+	Audio::SeekableAudioStream *audioStream = NULL;
+	Audio::SoundHandle handle;
+	Audio::Mixer *_mixer = g_system->getMixer();
+	int volume = 100;
+	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, volume);
+	
+
+		for (int i = 1; i < 5; i++) {
+		Common::File *musicStream = new Common::File();
+		musicStream->open(Common::String::format("track%02d.ogg",i));		
+
+		//#ifdef USE_MAD
+						//audioStream = Audio::makeMP3Stream(musicStream, DisposeAfterUse::NO);
+		//#endif
+
+		#ifdef USE_VORBIS
+						audioStream = Audio::makeVorbisStream(musicStream, DisposeAfterUse::NO);
+		#endif
+	
+		if (!audioStream)
+			delete musicStream;
+
+		_mixer->playStream(Audio::Mixer::kMusicSoundType, &handle, audioStream);
+		Testsuite::writeOnScreen(Common::String::format("Playing Now: track%02d", i), pt);
+		while (_mixer->isSoundHandleActive(handle)) {
+		g_system->delayMillis(10);
+		g_system->updateScreen();
+		}
+		_mixer->stopHandle(handle);
+		musicStream->close();
+		delete musicStream;
+					
+	}
+	
+	return passed;
+}
 }	// End of namespace Testbed

@@ -28,6 +28,11 @@
 #include "testbed/testsuite.h"
 
 namespace Testbed {
+	enum MusicFlags {
+	MUSIC_NORMAL = 0,
+	MUSIC_LOOP = 0x0001,
+	MUSIC_DEFAULT = 0xffff
+	};
 
 class SoundSubsystemDialog : public TestbedInteractionDialog {
 public:
@@ -47,6 +52,9 @@ TestExitStatus playBeeps();
 TestExitStatus mixSounds();
 TestExitStatus audiocdOutput();
 TestExitStatus sampleRates();
+TestExitStatus Play_mp3();
+TestExitStatus Play_Ogg();
+
 }
 
 class SoundSubsystemTestSuite : public Testsuite {
